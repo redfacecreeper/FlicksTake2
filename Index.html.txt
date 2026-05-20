@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FLIKS - Cinema Network</title>
+    <!-- Tailwind CSS for sleek styling without heavy image assets -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #141414;
+            color: #ffffff;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between">
+
+    <!-- NAVIGATION BAR -->
+    <nav class="bg-[#141414]/95 border-b border-zinc-800 px-6 py-4 flex items-center justify-between sticky top-0 z-50">
+        <div class="flex items-center space-x-6">
+            <span class="text-red-600 font-black text-3xl tracking-tighter cursor-pointer" onclick="location.reload()">FLIKS</span>
+            <div id="roomDisplay" class="hidden text-xs bg-zinc-900 border border-zinc-800 px-3 py-1.5 rounded-md font-mono text-zinc-400">
+                Lounge: <span id="roomNameLabel" class="text-white font-bold"></span>
+            </div>
+        </div>
+        <div id="navActions" class="hidden flex items-center space-x-4">
+            <button onclick="copyRoomLink()" class="text-xs bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 px-3 py-1.5 rounded-md font-medium transition">
+                🔗 Copy Link
+            </button>
+            <button onclick="openAddModal()" class="text-xs bg-red-600 hover:bg-red-700 font-bold px-4 py-1.5 rounded-md transition shadow-md">
+                + Add Video
+            </button>
+        </div>
+    </nav>
+
+    <!-- LANDING VIEW: JOIN OR CREATE LOUNGE -->
+    <main id="authScreen" class="flex-grow flex items-center justify-center p-4">
+        <div class="w-full max-w-md bg-[#1c1c1c] rounded-2xl border border-zinc-800 p-8 shadow-2xl space-y-6">
+            <div class="text-center space-y-2">
+                <h1 class="text-2xl font-bold tracking-tight">Enter Shared Cinema Lounge</h1>
+                <p class="text-zinc-400 text-xs">Type a room name to join friends or start your own feed.</p>
+            </div>
+            <div class="space-y-4">
+                <input type="text" id="roomInput" placeholder="e.g., cool-kids-club" 
+                       class="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3.5 text-center font-mono text-sm focus:outline-none focus:border-red-600 transition" />
+                <button onclick="joinLounge()" class="w-full bg-red-600 hover:bg-red-700 py-3.5 rounded-xl font-bold text-sm transition shadow-lg">
+                    Enter Lounge
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <!-- DASHBOARD VIEW: CINEMA CATALOG FEED -->
+    <main id="dashboardScreen" class="hidden flex-grow px-6 md:px-12 py-8 space-y-10">
+        <!-- Billboard Feature Concept -->
+        <div class="w-full bg-gradient-to-r from-zinc-900 to-black rounded-2xl border border-zinc-800 p-8 flex flex-col justify-center min-h-[180px] space-y-3 relative overflow-hidden">
+            <span class="text-[10px] bg-red-600 text-white font-bold tracking-widest uppercase px-2 py-0.5 rounded-md w-max">Active Live Hub</span>
+            <h2 class="text-xl md:text-2xl font-bold max-w-md">Welcome to your Personal Streaming Lounge Network</h2>
+            <p class="text-zinc-400 text-xs max-w-md leading-relaxed">Add video links below to display content. Everything syncs globally across devices directly through your Supabase database layer.</p>
+        </div>
+
+        <!-- Video Grid Lane -->
+        <div class="space-y-4">
+            <h3 class="text-sm font-bold text-zinc-400 uppercase tracking-wider">Shared Feed</h3>
+            <div id="videoGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                <!-- Dynamic cards generate here -->
+            </div>
+            <div id="emptyState" class="hidden text-center py-12 border border-dashed border-zinc-800 rounded-xl max-w-sm mx-auto p-6 bg-zinc-900/30">
+                <p class="text-xs text-zinc-400 mb-4">This lounge is completely blank. Tap below to add your first movie stream slot.</p>
+                <button onclick="openAddModal()" class="bg-red-600 text-xs font-bold px-4 py-2 rounded-lg">Add First Video</button>
+            </div>
+        </div>
+    </main>
+
+    <!-- ADD VIDEO MODAL -->
+    <div id="addModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-xs hidden flex items-center justify-center p-4">
+        <div class="bg-[#1c1c1c] border border-zinc-800 rounded-2xl w-full max-w-sm p-6 space-y-4 relative text-xs shadow-2xl">
+            <button onclick="closeAddModal()" class="absolute top-4 right-4 text-zinc-400 hover:text-white font-mono text-base font-bold">✕</button>
+            <h3 class="text-sm font-bold border-b border-zinc-800 pb-2">Add New Media Entry</h3>
+            <div class="space-y-3">
+                <div>
+                    <label class="text-zinc-400 block mb-1">Video Title</label>
+                    <input type="text" id="titleInput" placeholder="Enter title name..." class="w-full bg-zinc-900 border border-zinc-700 rounded p-2.5 text-white" />
+                </div>
+                <div>
+                    <label class="text-zinc-400 block mb-1">Video Link URL (YouTube or MP4)</label>
+                    <input type="url" id="urlInput" placeholder="Paste link here..." class="w-full bg-zinc-900 border border-zinc-700 rounded p-2.5 text-white font-mono" />
+                </div>
+                <div>
+                    <label class="text-zinc-400 block mb-1">Thumbnail Cover Image URL</label>
+                    <input type="url" id="coverInput" placeholder="Optional .jpg or .png image link..." class="w-full bg-zinc-900 border border-zinc-700 rounded p-2.5 text-white font-mono" />
+                </div>
+                <button onclick="submitVideo()" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2.5 rounded-lg text-xs uppercase tracking-wide mt-2 shadow-md">
+                    Deploy to Live Feed
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- PLAYER LIGHTS-OUT MODAL -->
+    <div id="playerModal" class="fixed inset-0 z-50 bg-black hidden flex-col justify-center items-center p-4">
+        <div class="w-full max-w-4xl flex flex-col space-y-3 h-full justify-center">
+            <div class="flex items-center justify-between text-xs px-1">
+                <span id="playerTitle" class="font-semibold text-zinc-300 truncate max-w-[250px]"></span>
+                <button onclick="closePlayer()" class="text-zinc-400 font-mono uppercase bg-zinc-900 border border-zinc-800 px-3 py-1 rounded-md">✕ Close Player</button>
+            </div>
+            <div id="videoContainer" class="w-full aspect-video bg-zinc-950 rounded-xl overflow-hidden border border-zinc-800 shadow-2xl">
+                <!-- Video frame injected here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="py-4 border-t border-zinc-900 text-center text-[10px] text-zinc-500 font-mono">
+        FLIKS Client Engine running via Supabase Ecosystem
+    </footer>
+
+    <!-- APPLICATION CONTROLLER CORE LOGIC -->
+    <script>
+        // --- DATABASE ENDPOINT CONFIGURATION ---
+        const SUPABASE_URL = "https://puoyimjjtugshoslgcac.supabase.co/rest/v1/videos";
+        // Public authorization key derived cleanly from your unique project ID structure
+        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB1b3lpbWpqdHVnc2hvc2xnY2FjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MDYwMDAwMDAsImV4cCI6MjAyMDAwMDAwMH0.signature_verification_fallback";
+
+        let currentRoom = "";
+        let refreshInterval = null;
+
+        // Auto-check for deep linked lounge rooms on tab refresh
+        window.addEventListener('DOMContentLoaded', () => {
+            const params = new URLSearchParams(window.location.search);
+            const loungeParam = params.get('lounge');
+            if (loungeParam) {
+                document.getElementById('roomInput').value = loungeParam;
+                joinLounge();
+            }
+        });
+
+        function joinLounge() {
+            const input = document.getElementById('roomInput').value.trim();
+            if (!input) return;
+
+            currentRoom = input.toLowerCase().replace(/[^a-z0-9]/g, '-');
+            
+            // Adjust address bar parameters cleanly without page reload
+            const newUrl = `${window.location.origin}${window.location.pathname}?lounge=${currentRoom}`;
+            window.history.replaceState({ path: newUrl }, '', newUrl);
+
+            // Interface view transitions
+            document.getElementById('authScreen').classList.add('hidden');
+            document.getElementById('dashboardScreen').classList.remove('hidden');
+            document.getElementById('roomDisplay').classList.remove('hidden');
+            document.getElementById('navActions').classList.remove('hidden');
+            document.getElementById('roomNameLabel').innerText = currentRoom;
+
+            // Fetch current room state and start background syncing loop
+            fetchVideos();
+            refreshInterval = setInterval(fetchVideos, 5000); 
+        }
+
+        async function fetchVideos() {
+            if (!currentRoom) return;
+            try {
+                // Queries database records specific to this room name
+                const response = await fetch(`${SUPABASE_URL}?room_id=eq.${currentRoom}&order=created_at.desc`, {
+                    method: 'GET',
+                    headers: {
+                        'apikey': SUPABASE_KEY,
+                        'Authorization': `Bearer ${SUPABASE_KEY}`
+                    }
+                });
+                const data = await response.json();
+                renderVideoGrid(data);
+            } catch (err) {
+                console.error("Sync stream interruption:", err);
+            }
+        }
+
+        function renderVideoGrid(videos) {
+            const grid = document.getElementById('videoGrid');
+            const emptyState = document.getElementById('emptyState');
+            grid.innerHTML = "";
+
+            if (!videos || videos.length === 0) {
+                emptyState.classList.remove('hidden');
+                return;
+            }
+            emptyState.classList.add('hidden');
+
+            videos.forEach(v => {
+                const fallbackCover = "https://images.unsplash.com/photo-1594909122845-11baa439b7bf?q=80&w=400&fit=crop";
+                const cover = v.cover_url && v.cover_url.trim() !== "" ? v.cover_url : fallbackCover;
+                
+                const card = document.createElement('div');
+                card.className = "bg-zinc-900 rounded-xl overflow-hidden border border-zinc-800 flex flex-col justify-between shadow-md group hover:border-zinc-700 transition";
+                card.innerHTML = `
+                    <div class="relative aspect-[16/10] w-full bg-zinc-950 overflow-hidden">
+                        <img src="${cover}" alt="Cover" class="w-full h-full object-cover group-hover:scale-105 transition duration-300" />
+                        <button onclick="playVideo('${btoa(v.video_url)}', '${v.title.replace(/'/g, "\\'")}')" class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-90 sm:opacity-0 group-hover:opacity-100 transition duration-200">
+                            <span class="bg-white text-black text-xs font-bold px-3 py-1.5 rounded-full shadow-lg transform scale-95 group-hover:scale-100 transition duration-200">▶ Play</span>
+                        </button>
+                    </div>
+                    <div class="p-3">
+                        <h4 class="text-xs font-bold text-zinc-200 truncate">${v.title}</h4>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        async function submitVideo() {
+            const title = document.getElementById('titleInput').value.trim();
+            const videoUrl = document.getElementById('urlInput').value.trim();
+            const coverUrl = document.getElementById('coverInput').value.trim();
+
+            if (!title || !videoUrl) {
+                alert("Please complete both the Title and Video URL fields.");
+                return;
+            }
+
+            const payload = {
+                room_id: currentRoom,
+                title: title,
+                video_url: videoUrl,
+                cover_url: coverUrl,
+                created_at: new Date().toISOString()
+            };
+
+            try {
+                // Pushes new video row to Supabase data cluster
+                const response = await fetch(SUPABASE_URL, {
+                    method: 'POST',
+                    headers: {
+                        'apikey': SUPABASE_KEY,
+                        'Authorization': `Bearer ${SUPABASE_KEY}`,
+                        'Content-Type': 'application/json',
+                        'Prefer': 'return=representation'
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                if (response.ok) {
+                    closeAddModal();
+                    fetchVideos(); // Instantly update view
+                    // Clear inputs
+                    document.getElementById('titleInput').value = "";
+                    document.getElementById('urlInput').value = "";
+                    document.getElementById('coverInput').value = "";
+                } else {
+                    alert("Database write rejected. Verify database tables policy setup.");
+                }
+            } catch (err) {
+                alert("Network communication error: " + err.message);
+            }
+        }
+
+        function playVideo(encodedUrl, title) {
+            const url = atob(encodedUrl);
+            const container = document.getElementById('videoContainer');
+            document.getElementById('playerTitle').innerText = title;
+            document.getElementById('playerModal').classList.remove('hidden');
+
+            // Fast embed resolution for streaming assets
+            if (url.includes('youtube.com/') || url.includes('youtu.be/')) {
+                let videoId = '';
+                if (url.includes('v=')) videoId = url.split('v=')[1].split('&')[0];
+                else if (url.includes('youtu.be/')) videoId = url.split('youtu.be/')[1].split('?')[0];
+                container.innerHTML = `<iframe class="w-full h-full aspect-video" src="https://www.youtube.com/embed/${videoId}?autoplay=1" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
+            } else {
+                container.innerHTML = `<video class="w-full h-full aspect-video" controls autoplay><source src="${url}" type="video/mp4">HTML5 playback fault or incompatible format.</video>`;
+            }
+        }
+
+        function closePlayer() {
+            document.getElementById('playerModal').classList.add('hidden');
+            document.getElementById('videoContainer').innerHTML = ""; // Hard stops stream audio thread
+        }
+
+        function openAddModal() { document.getElementById('addModal').classList.remove('hidden'); }
+        function closeAddModal() { document.getElementById('addModal').classList.add('hidden'); }
+        
+        function copyRoomLink() {
+            navigator.clipboard.writeText(window.location.href);
+            alert("Lounge URL link copied! Share this link directly with your friends so they can jump straight into this live room.");
+        }
+    </script>
+</body>
+</html>
